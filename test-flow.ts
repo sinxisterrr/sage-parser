@@ -27,7 +27,7 @@ async function testFlow() {
   }
 
   if (!EMBEDDER_URL) {
-    console.error("\n❌ EMBEDDER_URL not set! Should be: http://localhost:3000");
+    console.error("\n❌ EMBEDDER_URL not set! Should be: http://localhost:3001");
     process.exit(1);
   }
 
