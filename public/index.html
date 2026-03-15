@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sage Memory Parser</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --surface-2: #161616;
+      --border: #1f1f1f;
+      --border-hover: #383838;
+      --accent: #7c3aed;
+      --accent-hover: #6d28d9;
+      --accent-glow: rgba(124, 58, 237, 0.1);
+      --text: #e5e5e5;
+      --muted: #555;
+      --muted-light: #888;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      line-height: 1.5;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 540px;
+    }
+
+    /* ── Header ── */
+    .header { margin-bottom: 1.75rem; }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      margin-bottom: 0.375rem;
+    }
+
+    .logo-mark {
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: 1.0625rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .subtitle {
+      color: var(--muted-light);
+      font-size: 0.8rem;
+    }
+
+    /* ── Settings section ── */
+    .settings-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+
+    .settings-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .settings-header:hover { background: var(--surface-2); }
+
+    .settings-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+
+    .settings-status {
+      font-size: 0.72rem;
+      font-weight: 400;
+    }
+
+    .settings-status.ok { color: var(--success); }
+    .settings-status.missing { color: var(--warning); }
+
+    .settings-chevron {
+      color: var(--muted);
+      font-size: 0.625rem;
+      transition: transform 0.15s;
+    }
+
+    .settings-chevron.open { transform: rotate(180deg); }
+
+    .settings-body {
+      padding: 0 1rem 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .settings-body.hidden { display: none; }
+
+    .settings-note {
+      font-size: 0.75rem;
+      color: var(--muted-light);
+      padding: 0.625rem 0 0.875rem;
+      line-height: 1.5;
+    }
+
+    .settings-note a { color: var(--muted-light); }
+
+    .field { margin-bottom: 0.75rem; }
+
+    .field-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.3rem;
+      display: block;
+    }
+
+    .field input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.8125rem;
+      font-family: 'Menlo', 'Consolas', monospace;
+      padding: 0.5rem 0.625rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .field input::placeholder { color: var(--muted); }
+    .field input:focus { border-color: var(--accent); }
+
+    .field-hint {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    .settings-save {
+      width: 100%;
+      padding: 0.5rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      margin-top: 0.25rem;
+    }
+
+    .settings-save:hover {
+      background: var(--border);
+      border-color: var(--border-hover);
+    }
+
+    /* ── Drop zone ── */
+    .drop-zone {
+      border: 1.5px dashed var(--border-hover);
+      border-radius: 10px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      background: var(--surface);
+      margin-bottom: 0.875rem;
+      user-select: none;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .drop-zone-icon { font-size: 1.625rem; margin-bottom: 0.5rem; opacity: 0.5; }
+    .drop-zone-text { font-size: 0.875rem; font-weight: 500; margin-bottom: 0.2rem; }
+    .drop-zone-hint { font-size: 0.775rem; color: var(--muted-light); }
+
+    .drop-zone-formats {
+      margin-top: 0.5rem;
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-family: 'Menlo', 'Consolas', monospace;
+    }
+
+    input[type="file"] { display: none; }
+
+    /* ── File list ── */
+    .file-list { margin-bottom: 0.875rem; display: none; }
+
+    .file-list-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.375rem;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.625rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 0.25rem;
+      font-size: 0.8rem;
+    }
+
+    .file-ext {
+      font-family: 'Menlo', 'Consolas', monospace;
+      font-size: 0.65rem;
+      background: var(--border-hover);
+      color: var(--muted-light);
+      padding: 0.1rem 0.3rem;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .file-item-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-item-size { color: var(--muted); font-size: 0.72rem; white-space: nowrap; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      width: 100%;
+      padding: 0.6875rem 1.5rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+      margin-bottom: 0.5rem;
+    }
+
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .server-note {
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 0.5625rem 1.5rem;
+      background: transparent;
+      color: var(--muted-light);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.8375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      display: none;
+    }
+
+    .btn-secondary:hover { border-color: var(--border-hover); color: var(--text); }
+
+    /* ── Progress card ── */
+    .progress-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .done-banner {
+      display: none;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--success);
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 0.875rem;
+    }
+
+    .error-banner {
+      display: none;
+      background: rgba(239, 68, 68, 0.07);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 6px;
+      padding: 0.625rem 0.75rem;
+      color: var(--error);
+      font-size: 0.79rem;
+      line-height: 1.5;
+      margin-bottom: 0.875rem;
+    }
+
+    .progress-phase {
+      font-size: 0.8rem;
+      color: var(--muted-light);
+      margin-bottom: 0.5rem;
+      min-height: 1.2rem;
+    }
+
+    .progress-track {
+      height: 5px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 1.125rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 99px;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    .progress-fill.indeterminate {
+      width: 35%;
+      animation: shimmer 1.6s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0%   { transform: translateX(-200%); }
+      100% { transform: translateX(400%); }
+    }
+
+    /* ── Stats grid ── */
+    .stats-grid {
+      display: none;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .stat-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 0.625rem 0.5rem;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 1.25rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      margin-bottom: 0.2rem;
+    }
+
+    .stat-label {
+      font-size: 0.62rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 2.5rem;
+      text-align: center;
+      font-size: 0.72rem;
+      color: #2a2a2a;
+    }
+
+    .footer a { color: #333; text-decoration: none; }
+    .footer a:hover { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <div class="logo">
+        <div class="logo-mark">🧠</div>
+        <h1>Sage Memory Parser</h1>
+      </div>
+      <p class="subtitle">Upload your conversation exports. Sage will extract, classify, and embed your memories into the database.</p>
+    </div>
+
+    <!-- Settings (collapsible) -->
+    <div class="settings-section" id="settingsSection">
+      <div class="settings-header" id="settingsHeader" onclick="toggleSettings()">
+        <div class="settings-title">
+          <span>⚙</span>
+          <span>Connection</span>
+          <span class="settings-status" id="settingsStatus"></span>
+        </div>
+        <span class="settings-chevron" id="settingsChevron">▼</span>
+      </div>
+      <div class="settings-body" id="settingsBody">
+        <p class="settings-note">
+          Paste your Railway connection details below. These are saved in your browser and sent securely with each job —
+          you don't need to touch Railway's variable dashboard.
+          <br><br>
+          Find your <strong>Database URL</strong> in Railway → your pgvector service → <em>Variables</em> tab →
+          <code style="font-family:monospace;font-size:0.72rem">DATABASE_PUBLIC_URL</code>.
+          Your <strong>Embedder URL</strong> is the Railway internal address of your big-embedder service
+          (usually <code style="font-family:monospace;font-size:0.72rem">http://big-embedder.railway.internal:3000</code>).
+        </p>
+
+        <div class="field">
+          <label class="field-label" for="inputDbUrl">Database URL</label>
+          <input
+            type="password"
+            id="inputDbUrl"
+            placeholder="postgresql://postgres:…@monorail.proxy.rlwy.net:XXXXX/railway"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <div class="field-hint">From Railway → pgvector service → Variables → DATABASE_PUBLIC_URL</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="inputEmbedderUrl">Embedder URL</label>
+          <input
+            type="text"
+            id="inputEmbedderUrl"
+            placeholder="http://big-embedder.railway.internal:3000"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <div class="field-hint">The internal Railway URL for your big-embedder service</div>
+        </div>
+
+        <button class="settings-save" onclick="saveSettings()">Save</button>
+      </div>
+    </div>
+
+    <!-- Upload section -->
+    <div id="uploadSection">
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-zone-icon">📁</div>
+        <div class="drop-zone-text">Drop files here, or click to browse</div>
+        <div class="drop-zone-hint">Upload multiple files at once</div>
+        <div class="drop-zone-formats">.json &nbsp;·&nbsp; .pdf &nbsp;·&nbsp; .docx &nbsp;·&nbsp; .txt &nbsp;·&nbsp; .md</div>
+      </div>
+      <input type="file" id="fileInput" multiple accept=".json,.pdf,.docx,.doc,.txt,.md" />
+
+      <div class="file-list" id="fileList">
+        <div class="file-list-label">Selected files</div>
+        <div id="fileItems"></div>
+      </div>
+
+      <button class="btn-primary" id="uploadBtn" disabled>Upload &amp; Parse</button>
+      <p class="server-note">Processing runs on the server — you can close this tab and come back anytime.</p>
+    </div>
+
+    <!-- Progress section -->
+    <div class="progress-card" id="progressCard">
+      <div class="done-banner" id="doneBanner">✓&nbsp; Done! Your memories are in the database.</div>
+      <div class="error-banner" id="errorBanner"></div>
+
+      <div class="progress-phase" id="progressPhase">Starting...</div>
+      <div class="progress-track">
+        <div class="progress-fill indeterminate" id="progressFill"></div>
+      </div>
+
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-box">
+          <div class="stat-num" id="statMemories">—</div>
+          <div class="stat-label">Memories</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="statPersona">—</div>
+          <div class="stat-label">Persona</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="statHuman">—</div>
+          <div class="stat-label">Human</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-secondary" id="resetBtn" onclick="resetUI()">Parse another export</button>
+
+    <div class="footer">Made with 🖤 by <a href="https://discord.gg/Pa2U2g5hUd" target="_blank">Sin &amp; Hex</a></div>
+  </div>
+
+  <script>
+    // ── Element refs ──────────────────────────────────────────
+    const dropZone       = document.getElementById('dropZone');
+    const fileInput      = document.getElementById('fileInput');
+    const fileList       = document.getElementById('fileList');
+    const fileItems      = document.getElementById('fileItems');
+    const uploadBtn      = document.getElementById('uploadBtn');
+    const uploadSection  = document.getElementById('uploadSection');
+    const progressCard   = document.getElementById('progressCard');
+    const progressPhase  = document.getElementById('progressPhase');
+    const progressFill   = document.getElementById('progressFill');
+    const doneBanner     = document.getElementById('doneBanner');
+    const errorBanner    = document.getElementById('errorBanner');
+    const statsGrid      = document.getElementById('statsGrid');
+    const resetBtn       = document.getElementById('resetBtn');
+    const settingsBody   = document.getElementById('settingsBody');
+    const settingsStatus = document.getElementById('settingsStatus');
+    const settingsChevron = document.getElementById('settingsChevron');
+    const inputDbUrl     = document.getElementById('inputDbUrl');
+    const inputEmbedder  = document.getElementById('inputEmbedderUrl');
+
+    let selectedFiles = [];
+    let pollInterval  = null;
+    let currentJobId  = null;
+
+    // ── Settings ──────────────────────────────────────────────
+    function loadSettings() {
+      const db  = localStorage.getItem('sage_db_url')      || '';
+      const emb = localStorage.getItem('sage_embedder_url') || '';
+      inputDbUrl.value   = db;
+      inputEmbedder.value = emb || 'http://big-embedder.railway.internal:3000';
+      updateSettingsStatus(db, emb);
+      // Collapse if already configured
+      if (db && emb) {
+        settingsBody.classList.add('hidden');
+        settingsChevron.classList.remove('open');
+      } else {
+        settingsBody.classList.remove('hidden');
+        settingsChevron.classList.add('open');
+      }
+    }
+
+    function updateSettingsStatus(db, emb) {
+      if (db && emb) {
+        settingsStatus.textContent = '· connected';
+        settingsStatus.className   = 'settings-status ok';
+      } else {
+        settingsStatus.textContent = '· not configured';
+        settingsStatus.className   = 'settings-status missing';
+      }
+    }
+
+    function toggleSettings() {
+      const hidden = settingsBody.classList.toggle('hidden');
+      if (hidden) {
+        settingsChevron.classList.remove('open');
+      } else {
+        settingsChevron.classList.add('open');
+      }
+    }
+
+    function saveSettings() {
+      const db  = inputDbUrl.value.trim();
+      const emb = inputEmbedder.value.trim();
+      if (!db)  { inputDbUrl.focus();    return; }
+      if (!emb) { inputEmbedder.focus(); return; }
+      localStorage.setItem('sage_db_url',       db);
+      localStorage.setItem('sage_embedder_url', emb);
+      updateSettingsStatus(db, emb);
+      settingsBody.classList.add('hidden');
+      settingsChevron.classList.remove('open');
+    }
+
+    loadSettings();
+
+    // ── Resume in-progress job ────────────────────────────────
+    const savedJobId = localStorage.getItem('sage_parser_jobId');
+    if (savedJobId) {
+      fetch(`/api/job/${savedJobId}`)
+        .then(r => r.json())
+        .then(state => {
+          if (state.error) { localStorage.removeItem('sage_parser_jobId'); return; }
+          currentJobId = savedJobId;
+          showProgressCard();
+          if (state.status === 'processing' || state.status === 'queued') {
+            startPolling(savedJobId);
+          } else {
+            applyJobState(state);
+            localStorage.removeItem('sage_parser_jobId');
+          }
+        })
+        .catch(() => localStorage.removeItem('sage_parser_jobId'));
+    }
+
+    // ── Drop zone ─────────────────────────────────────────────
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      setFiles(Array.from(e.dataTransfer.files));
+    });
+    fileInput.addEventListener('change', () => setFiles(Array.from(fileInput.files)));
+
+    function setFiles(files) {
+      selectedFiles = files;
+      if (!files.length) { fileList.style.display = 'none'; uploadBtn.disabled = true; return; }
+      fileList.style.display = 'block';
+      uploadBtn.disabled = false;
+      fileItems.innerHTML = files.map(f => `
+        <div class="file-item">
+          <span class="file-ext">${esc(f.name.split('.').pop().toUpperCase())}</span>
+          <span class="file-item-name">${esc(f.name)}</span>
+          <span class="file-item-size">${fmtBytes(f.size)}</span>
+        </div>
+      `).join('');
+    }
+
+    // ── Upload ────────────────────────────────────────────────
+    uploadBtn.addEventListener('click', async () => {
+      if (!selectedFiles.length) return;
+
+      const dbUrl  = localStorage.getItem('sage_db_url')      || '';
+      const embUrl = localStorage.getItem('sage_embedder_url') || '';
+
+      if (!dbUrl || !embUrl) {
+        settingsBody.classList.remove('hidden');
+        settingsChevron.classList.add('open');
+        inputDbUrl.focus();
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Uploading...';
+
+      const form = new FormData();
+      for (const f of selectedFiles) form.append('files', f);
+      form.append('databaseUrl', dbUrl);
+      form.append('embedderUrl', embUrl);
+
+      try {
+        const res  = await fetch('/api/upload', { method: 'POST', body: form });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Upload failed');
+
+        currentJobId = data.jobId;
+        localStorage.setItem('sage_parser_jobId', currentJobId);
+        showProgressCard();
+        startPolling(currentJobId);
+      } catch (err) {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = 'Upload & Parse';
+        alert('Upload failed: ' + err.message);
+      }
+    });
+
+    // ── Polling ───────────────────────────────────────────────
+    function startPolling(jobId) {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/job/${jobId}`);
+          if (!res.ok) { clearInterval(pollInterval); return; }
+          const state = await res.json();
+          applyJobState(state);
+          if (state.status === 'done' || state.status === 'error') {
+            clearInterval(pollInterval);
+            pollInterval = null;
+            localStorage.removeItem('sage_parser_jobId');
+          }
+        } catch {}
+      }, 2000);
+    }
+
+    function applyJobState(state) {
+      progressPhase.textContent = state.phase || 'Processing...';
+      if (state.progress > 0) {
+        progressFill.classList.remove('indeterminate');
+        progressFill.style.width = state.progress + '%';
+      }
+      if (state.status === 'done') {
+        progressFill.style.width   = '100%';
+        progressFill.style.background = 'var(--success)';
+        progressPhase.style.display   = 'none';
+        doneBanner.style.display      = 'flex';
+        if (state.stats) {
+          statsGrid.style.display = 'grid';
+          document.getElementById('statMemories').textContent = state.stats.archivalMemories.toLocaleString();
+          document.getElementById('statPersona').textContent  = state.stats.personaBlocks.toLocaleString();
+          document.getElementById('statHuman').textContent    = state.stats.humanBlocks.toLocaleString();
+        }
+        resetBtn.style.display = 'block';
+      } else if (state.status === 'error') {
+        progressFill.style.width      = '100%';
+        progressFill.style.background = 'var(--error)';
+        progressPhase.style.display   = 'none';
+        errorBanner.style.display     = 'block';
+        errorBanner.textContent       = '❌ ' + (state.error || 'Something went wrong. Check the server logs.');
+        resetBtn.style.display        = 'block';
+      }
+    }
+
+    function showProgressCard() {
+      uploadSection.style.display = 'none';
+      progressCard.style.display  = 'block';
+    }
+
+    function resetUI() {
+      if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+      localStorage.removeItem('sage_parser_jobId');
+      currentJobId  = null;
+      selectedFiles = [];
+      fileInput.value      = '';
+      fileItems.innerHTML  = '';
+      fileList.style.display  = 'none';
+      uploadBtn.disabled      = true;
+      uploadBtn.textContent   = 'Upload & Parse';
+
+      progressCard.style.display        = 'none';
+      progressFill.style.width          = '0%';
+      progressFill.style.background     = 'var(--accent)';
+      progressFill.classList.add('indeterminate');
+      progressPhase.style.display       = '';
+      progressPhase.textContent         = 'Starting...';
+      doneBanner.style.display          = 'none';
+      errorBanner.style.display         = 'none';
+      errorBanner.textContent           = '';
+      statsGrid.style.display           = 'none';
+      resetBtn.style.display            = 'none';
+
+      uploadSection.style.display = 'block';
+    }
+
+    // ── Utils ─────────────────────────────────────────────────
+    function fmtBytes(b) {
+      if (b < 1024)        return b + ' B';
+      if (b < 1048576)     return (b / 1024).toFixed(1) + ' KB';
+      return (b / 1048576).toFixed(1) + ' MB';
+    }
+
+    function esc(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  </script>
+</body>
+</html>
