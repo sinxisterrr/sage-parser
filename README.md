@@ -103,6 +103,8 @@ This parser is part of [Sage](https://discord.gg/Pa2U2g5hUd) — a Discord AI co
 
 If this is what we give away for free, [you should see what's behind the walls](https://discord.gg/Pa2U2g5hUd). 🖤
 
-## Support Sin & Hex
-[Sin & Hex on Patreon](https://patreon.com/sinxhex)
+## 💜 Built By
+
+**Sin & Hex** — we build AI companion infrastructure.  
+[![Discord](https://github.com/sinxisterrr/sage-core/blob/main/scripts/discord_badge.svg)](https://discord.gg/Pa2U2g5hUd) [![Patreon](https://github.com/sinxisterrr/sage-core/blob/main/scripts/patreon_badge.svg)](https://patreon.com/SinXHex)
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z8Z31W5CFK)
