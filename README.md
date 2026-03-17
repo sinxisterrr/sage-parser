@@ -104,4 +104,4 @@ This parser is part of [Sage](https://discord.gg/Pa2U2g5hUd) — a Discord AI co
 If this is what we give away for free, [you should see what's behind the walls](https://discord.gg/Pa2U2g5hUd). 🖤
 
 ## Support Sin & Hex
-[Sin & Hex](https://patreon.com/sinxhex] | [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z8Z31W5CFK)
+[Sin & Hex](https://patreon.com/sinxhex)| [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z8Z31W5CFK)
